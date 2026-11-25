@@ -80,4 +80,4 @@ inline std::string Config::fromString<std::string>(const std::string& text, cons
     return text;
 }
 
-} // namespace auvio
+}

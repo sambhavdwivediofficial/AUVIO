@@ -81,7 +81,7 @@ private:
     int m_line;
 };
 
-} // namespace auvio
+}
 
 #define AUVIO_LOG_DEBUG    ::auvio::LogStream(::auvio::LogLevel::Debug,    __FILE__, __LINE__)
 #define AUVIO_LOG_INFO     ::auvio::LogStream(::auvio::LogLevel::Info,     __FILE__, __LINE__)

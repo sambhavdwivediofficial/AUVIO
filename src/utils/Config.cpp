@@ -130,4 +130,4 @@ void Config::remove(const std::string& key) {
     m_values.erase(key);
 }
 
-} // namespace auvio
+}

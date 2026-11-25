@@ -26,7 +26,7 @@ void enableAnsiOnWindowsConsole() {
 #endif
 }
 
-} // namespace
+}
 
 Logger& Logger::instance() {
     static Logger instance;
@@ -147,4 +147,4 @@ std::string Logger::shortFileName(const char* filePath) {
     return (slash == std::string::npos) ? path : path.substr(slash + 1);
 }
 
-} // namespace auvio
+}
