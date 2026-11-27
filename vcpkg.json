@@ -4,5 +4,11 @@
   "dependencies": [
     "ffmpeg",
     "sdl2"
-  ]
+  ],
+  "features": {
+    "tests": {
+      "description": "Build unit tests",
+      "dependencies": ["catch2"]
+    }
+  }
 }

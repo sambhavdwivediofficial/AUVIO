@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QFile>
 #include <filesystem>
 
 #include "MainWindow.h"
@@ -13,6 +14,11 @@
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
+
+    QFile themeFile(":/theme/dark.qss");
+    if (themeFile.open(QFile::ReadOnly | QFile::Text)) {
+        app.setStyleSheet(QString::fromUtf8(themeFile.readAll()));
+    }
 
     auvio::Config::instance().load();
 

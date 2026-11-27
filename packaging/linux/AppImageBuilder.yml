@@ -1,0 +1,38 @@
+version: 1
+
+AppDir:
+  path: ./AppDir
+
+  app_info:
+    id: com.sambhavdwivedi.auvio
+    name: AUVIO
+    icon: auvio
+    version: 0.1.0
+    exec: usr/bin/AUVIO
+    exec_args: $@
+
+  files:
+    include:
+      - usr/bin/AUVIO
+      - usr/share/icons/hicolor/256x256/apps/auvio.png
+      - usr/share/applications/auvio.desktop
+    exclude:
+      - usr/share/man
+      - usr/share/doc
+
+  runtime:
+    env:
+      QT_QPA_PLATFORM: xcb
+
+  test:
+    fedora:
+      image: appimagecrafters/tests-env:fedora-30
+      command: ./AppRun
+    debian:
+      image: appimagecrafters/tests-env:debian-stable
+      command: ./AppRun
+
+AppImage:
+  arch: x86_64
+  update-information: guess
+  sign-key: None

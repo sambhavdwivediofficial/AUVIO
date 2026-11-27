@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=AUVIO
+Comment=Lightweight cross-platform video and music player
+Exec=AUVIO %F
+Icon=auvio
+Terminal=false
+Categories=AudioVideo;Player;
+MimeType=video/mp4;video/x-matroska;audio/mpeg;audio/flac;

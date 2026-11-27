@@ -1,0 +1,147 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.12.1'
+          arch: 'win64_msvc2022_64'
+
+      - name: Setup Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v4
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+
+      - name: Cache vcpkg archives
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\vcpkg\archives
+          key: vcpkg-windows-${{ hashFiles('vcpkg.json') }}
+
+      - name: Configure
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: cmake --preset windows-release -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR"
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build --preset windows-release
+
+      - name: Deploy Qt dependencies
+        shell: pwsh
+        run: '& "$env:QT_ROOT_DIR\bin\windeployqt.exe" "build\windows-release\bin\AUVIO.exe"'
+
+      - name: Install NSIS
+        shell: pwsh
+        run: choco install nsis -y
+
+      - name: Build installer
+        shell: pwsh
+        run: '& "C:\Program Files (x86)\NSIS\makensis.exe" packaging\windows\installer.nsi'
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUVIO-windows-installer
+          path: packaging/windows/AUVIO-Setup.exe
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.12.1'
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config autoconf automake libtool nasm
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Cache vcpkg archives
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-linux-${{ hashFiles('vcpkg.json') }}
+
+      - name: Configure
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --preset linux-release -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
+
+      - name: Build
+        run: cmake --build --preset linux-release
+
+      - name: Install appimage-builder
+        run: |
+          pip install --user appimage-builder
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Stage AppDir
+        run: |
+          mkdir -p packaging/linux/AppDir/usr/bin
+          mkdir -p packaging/linux/AppDir/usr/share/applications
+          mkdir -p packaging/linux/AppDir/usr/share/icons/hicolor/256x256/apps
+          cp build/linux-release/bin/AUVIO packaging/linux/AppDir/usr/bin/
+          cp assets/icons/auvio.desktop packaging/linux/AppDir/usr/share/applications/
+          cp assets/icons/auvio.png packaging/linux/AppDir/usr/share/icons/hicolor/256x256/apps/
+
+      - name: Build AppImage
+        working-directory: packaging/linux
+        run: appimage-builder --recipe AppImageBuilder.yml --skip-test
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUVIO-linux-appimage
+          path: packaging/linux/*.AppImage
+
+  release:
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/AUVIO-windows-installer/AUVIO-Setup.exe
+            artifacts/AUVIO-linux-appimage/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

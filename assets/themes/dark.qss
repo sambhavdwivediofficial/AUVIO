@@ -1,0 +1,93 @@
+QWidget {
+    background-color: #1e1e1e;
+    color: #e8e8e8;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 13px;
+}
+
+QMainWindow, QDialog {
+    background-color: #1a1a1a;
+}
+
+QMenuBar {
+    background-color: #242424;
+    border-bottom: 1px solid #333333;
+}
+
+QMenuBar::item:selected {
+    background-color: #3a3a3a;
+    border-radius: 4px;
+}
+
+QMenu {
+    background-color: #242424;
+    border: 1px solid #333333;
+}
+
+QMenu::item:selected {
+    background-color: #0a84ff;
+}
+
+QPushButton {
+    background-color: #2d2d2d;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+QPushButton:hover {
+    background-color: #3a3a3a;
+}
+
+QPushButton:pressed {
+    background-color: #0a84ff;
+}
+
+QSlider::groove:horizontal {
+    height: 4px;
+    background: #3a3a3a;
+    border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+    background: #0a84ff;
+    width: 14px;
+    height: 14px;
+    margin: -5px 0;
+    border-radius: 7px;
+}
+
+QSlider::sub-page:horizontal {
+    background: #0a84ff;
+    border-radius: 2px;
+}
+
+QListWidget {
+    background-color: #202020;
+    border: none;
+    border-radius: 8px;
+}
+
+QListWidget::item {
+    padding: 6px;
+    border-radius: 6px;
+}
+
+QListWidget::item:selected {
+    background-color: #0a84ff;
+}
+
+QDockWidget {
+    titlebar-close-icon: none;
+    border: none;
+}
+
+QComboBox, QCheckBox {
+    background-color: #2d2d2d;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+QLabel {
+    background: transparent;
+}
