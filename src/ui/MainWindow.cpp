@@ -114,7 +114,7 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
 
 #ifdef _WIN32
 bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result) {
-    if (eventType == "windows_generic_MSG" && windowHandle()) {
+    if (eventType == "windows_generic_MSG" && windowHandle() && m_titleBar) {
         if (NativeWindowFrame::handleNativeEvent(
                 windowHandle(), message, result,
                 m_titleBar->geometry(), m_titleBar->buttonRects(), kResizeMargin)) {

@@ -52,12 +52,12 @@ private:
 
     std::unique_ptr<PlaybackController> m_controller;
 
-    QWidget* m_central;
-    TitleBar* m_titleBar;
-    QLabel* m_videoLabel;
-    PlayerControls* m_controls;
-    QTimer* m_positionTimer;
-    QTimer* m_inactivityTimer;
+    QWidget* m_central = nullptr;
+    TitleBar* m_titleBar = nullptr;
+    QLabel* m_videoLabel = nullptr;
+    PlayerControls* m_controls = nullptr;
+    QTimer* m_positionTimer = nullptr;
+    QTimer* m_inactivityTimer = nullptr;
 
     bool m_controlsVisible = true;
 };
