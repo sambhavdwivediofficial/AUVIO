@@ -13,7 +13,6 @@ namespace auvio {
 
 class TitleBar;
 class PlayerControls;
-class PlaylistView;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -24,16 +23,16 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
-    void mouseMoveEvent(QMouseEvent* event) override;
-    void mousePressEvent(QMouseEvent* event) override;
     bool eventFilter(QObject* watched, QEvent* event) override;
+#ifdef _WIN32
+    bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
+#endif
 
 private slots:
     void onOpenFile();
     void onPlayPauseClicked();
     void onSeekRequested(double fraction);
     void onVolumeChanged(int percent);
-    void onPlaylistFileActivated(const QString& path);
     void onFrameReady(QImage image);
     void onPositionTimer();
     void onInactivityTimeout();
@@ -47,8 +46,8 @@ signals:
 private:
     void openPath(const QString& path);
     void repositionOverlays();
-    void showOverlayControls();
-    void hideOverlayControls();
+    void showControls();
+    void hideControls();
     void resetInactivityTimer();
 
     std::unique_ptr<PlaybackController> m_controller;
@@ -57,11 +56,10 @@ private:
     TitleBar* m_titleBar;
     QLabel* m_videoLabel;
     PlayerControls* m_controls;
-    PlaylistView* m_playlist;
     QTimer* m_positionTimer;
     QTimer* m_inactivityTimer;
 
-    bool m_overlaysVisible = true;
+    bool m_controlsVisible = true;
 };
 
 }

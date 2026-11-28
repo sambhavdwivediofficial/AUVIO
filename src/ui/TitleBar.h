@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <QString>
+#include <vector>
 
 class QLabel;
 class QPushButton;
@@ -17,6 +18,8 @@ public:
     void setTitleText(const QString& text);
     void setMaximized(bool maximized);
 
+    std::vector<QRect> buttonRects() const;
+
 signals:
     void openFileRequested();
     void openSettingsRequested();
@@ -24,18 +27,14 @@ signals:
     void maximizeRestoreRequested();
     void closeRequested();
 
-protected:
-    void mousePressEvent(QMouseEvent* event) override;
-    void mouseDoubleClickEvent(QMouseEvent* event) override;
-
 private:
     QLabel* m_iconLabel;
     QLabel* m_titleLabel;
     QPushButton* m_fileButton;
     QPushButton* m_settingsButton;
-    QPushButton* m_minimizeButton;
-    QPushButton* m_maximizeButton;
-    QPushButton* m_closeButton;
+    QPushButton* m_minimizeButton = nullptr;
+    QPushButton* m_maximizeButton = nullptr;
+    QPushButton* m_closeButton = nullptr;
 };
 
 }

@@ -30,7 +30,10 @@ find_package(FFMPEG REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 
 if (WIN32)
-    set(AUVIO_PLATFORM_SOURCES src/platform/windows/HardwareDetect_Win.cpp)
+    set(AUVIO_PLATFORM_SOURCES
+        src/platform/windows/HardwareDetect_Win.cpp
+        src/platform/windows/NativeWindowFrame_Win.cpp
+    )
     set(AUVIO_PLATFORM_INCLUDE_DIR src/platform/windows)
 else()
     set(AUVIO_PLATFORM_SOURCES src/platform/linux/HardwareDetect_Linux.cpp)

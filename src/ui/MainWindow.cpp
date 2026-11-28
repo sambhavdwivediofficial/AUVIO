@@ -1,42 +1,30 @@
 #include "MainWindow.h"
 #include "TitleBar.h"
 #include "PlayerControls.h"
-#include "PlaylistView.h"
 #include "SettingsDialog.h"
 #include "Logger.h"
 
 #include <QLabel>
 #include <QTimer>
-#include <QDockWidget>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QPixmap>
-#include <QMouseEvent>
-#include <QWindow>
 #include <QPropertyAnimation>
 #include <QEvent>
+
+#ifdef _WIN32
+#include "NativeWindowFrame_Win.h"
+#endif
 
 namespace auvio {
 
 namespace {
-
 constexpr int kResizeMargin = 6;
-constexpr int kInactivityMs = 3000;
-constexpr int kAnimationMs = 220;
-
-Qt::Edges edgesAt(const QPoint& pos, const QSize& size) {
-    Qt::Edges edges;
-    if (pos.x() <= kResizeMargin) edges |= Qt::LeftEdge;
-    if (pos.x() >= size.width() - kResizeMargin) edges |= Qt::RightEdge;
-    if (pos.y() <= kResizeMargin) edges |= Qt::TopEdge;
-    if (pos.y() >= size.height() - kResizeMargin) edges |= Qt::BottomEdge;
-    return edges;
-}
-
+constexpr int kInactivityMs = 2000;
+constexpr int kAnimationMs = 200;
 }
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
-    setWindowFlag(Qt::FramelessWindowHint, true);
     setMouseTracking(true);
     setMinimumSize(480, 320);
 
@@ -61,12 +49,6 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_controls->setMouseTracking(true);
     m_controls->installEventFilter(this);
 
-    m_playlist = new PlaylistView(this);
-    auto* playlistDock = new QDockWidget("Playlist", this);
-    playlistDock->setObjectName("playlistDock");
-    playlistDock->setWidget(m_playlist);
-    addDockWidget(Qt::RightDockWidgetArea, playlistDock);
-
     m_positionTimer = new QTimer(this);
     m_positionTimer->setInterval(200);
 
@@ -83,7 +65,6 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     connect(m_controls, &PlayerControls::playPauseClicked, this, &MainWindow::onPlayPauseClicked);
     connect(m_controls, &PlayerControls::seekRequested, this, &MainWindow::onSeekRequested);
     connect(m_controls, &PlayerControls::volumeChanged, this, &MainWindow::onVolumeChanged);
-    connect(m_playlist, &PlaylistView::fileActivated, this, &MainWindow::onPlaylistFileActivated);
     connect(m_positionTimer, &QTimer::timeout, this, &MainWindow::onPositionTimer);
     connect(m_inactivityTimer, &QTimer::timeout, this, &MainWindow::onInactivityTimeout);
     connect(this, &MainWindow::frameReady, this, &MainWindow::onFrameReady);
@@ -96,6 +77,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     resize(1100, 680);
     setWindowTitle("AUVIO");
+
+#ifdef _WIN32
+    winId(); // forces the native window to exist before we touch it
+    NativeWindowFrame::enable(windowHandle());
+#endif
 
     m_titleBar->raise();
     m_controls->raise();
@@ -115,37 +101,8 @@ void MainWindow::repositionOverlays() {
     m_titleBar->setGeometry(area.x(), area.y(), area.width(), m_titleBar->height());
 
     const int controlsHeight = m_controls->sizeHint().height();
-    const int controlsY = m_overlaysVisible ? (area.bottom() - controlsHeight + 1) : (area.bottom() + 1);
+    const int controlsY = m_controlsVisible ? (area.bottom() - controlsHeight + 1) : (area.bottom() + 1);
     m_controls->setGeometry(area.x(), controlsY, area.width(), controlsHeight);
-}
-
-void MainWindow::mouseMoveEvent(QMouseEvent* event) {
-    const Qt::Edges edges = edgesAt(event->pos(), size());
-    if (edges == (Qt::TopEdge | Qt::LeftEdge) || edges == (Qt::BottomEdge | Qt::RightEdge)) {
-        setCursor(Qt::SizeFDiagCursor);
-    } else if (edges == (Qt::TopEdge | Qt::RightEdge) || edges == (Qt::BottomEdge | Qt::LeftEdge)) {
-        setCursor(Qt::SizeBDiagCursor);
-    } else if (edges & (Qt::LeftEdge | Qt::RightEdge)) {
-        setCursor(Qt::SizeHorCursor);
-    } else if (edges & (Qt::TopEdge | Qt::BottomEdge)) {
-        setCursor(Qt::SizeVerCursor);
-    } else {
-        unsetCursor();
-    }
-
-    resetInactivityTimer();
-    QMainWindow::mouseMoveEvent(event);
-}
-
-void MainWindow::mousePressEvent(QMouseEvent* event) {
-    if (event->button() == Qt::LeftButton && windowHandle()) {
-        const Qt::Edges edges = edgesAt(event->pos(), size());
-        if (edges) {
-            windowHandle()->startSystemResize(edges);
-            return;
-        }
-    }
-    QMainWindow::mousePressEvent(event);
 }
 
 bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
@@ -155,48 +112,51 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
     return QMainWindow::eventFilter(watched, event);
 }
 
+#ifdef _WIN32
+bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result) {
+    if (eventType == "windows_generic_MSG" && windowHandle()) {
+        if (NativeWindowFrame::handleNativeEvent(
+                windowHandle(), message, result,
+                m_titleBar->geometry(), m_titleBar->buttonRects(), kResizeMargin)) {
+            return true;
+        }
+    }
+    return QMainWindow::nativeEvent(eventType, message, result);
+}
+#endif
+
 void MainWindow::resetInactivityTimer() {
-    if (!m_overlaysVisible) {
-        showOverlayControls();
+    if (!m_controlsVisible) {
+        showControls();
     }
     m_inactivityTimer->start();
 }
 
-void MainWindow::showOverlayControls() {
-    m_overlaysVisible = true;
+void MainWindow::showControls() {
+    m_controlsVisible = true;
     m_central->unsetCursor();
 
-    auto* titleAnim = new QPropertyAnimation(m_titleBar, "geometry", this);
-    titleAnim->setDuration(kAnimationMs);
-    titleAnim->setEndValue(QRect(0, 0, m_central->width(), m_titleBar->height()));
-    titleAnim->start(QAbstractAnimation::DeleteWhenStopped);
-
     const int controlsHeight = m_controls->sizeHint().height();
-    auto* controlsAnim = new QPropertyAnimation(m_controls, "geometry", this);
-    controlsAnim->setDuration(kAnimationMs);
-    controlsAnim->setEndValue(QRect(0, m_central->height() - controlsHeight, m_central->width(), controlsHeight));
-    controlsAnim->start(QAbstractAnimation::DeleteWhenStopped);
+    auto* anim = new QPropertyAnimation(m_controls, "geometry", this);
+    anim->setDuration(kAnimationMs);
+    anim->setEndValue(QRect(0, m_central->height() - controlsHeight, m_central->width(), controlsHeight));
+    anim->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
-void MainWindow::hideOverlayControls() {
-    m_overlaysVisible = false;
-
-    auto* titleAnim = new QPropertyAnimation(m_titleBar, "geometry", this);
-    titleAnim->setDuration(kAnimationMs);
-    titleAnim->setEndValue(QRect(0, -m_titleBar->height(), m_central->width(), m_titleBar->height()));
-    titleAnim->start(QAbstractAnimation::DeleteWhenStopped);
+void MainWindow::hideControls() {
+    m_controlsVisible = false;
 
     const int controlsHeight = m_controls->sizeHint().height();
-    auto* controlsAnim = new QPropertyAnimation(m_controls, "geometry", this);
-    controlsAnim->setDuration(kAnimationMs);
-    controlsAnim->setEndValue(QRect(0, m_central->height(), m_central->width(), controlsHeight));
-    controlsAnim->start(QAbstractAnimation::DeleteWhenStopped);
+    auto* anim = new QPropertyAnimation(m_controls, "geometry", this);
+    anim->setDuration(kAnimationMs);
+    anim->setEndValue(QRect(0, m_central->height(), m_central->width(), controlsHeight));
+    anim->start(QAbstractAnimation::DeleteWhenStopped);
 
     m_central->setCursor(Qt::BlankCursor);
 }
 
 void MainWindow::onInactivityTimeout() {
-    hideOverlayControls();
+    hideControls();
 }
 
 void MainWindow::onOpenFile() {
@@ -213,7 +173,6 @@ void MainWindow::onOpenSettings() {
 
 void MainWindow::openPath(const QString& path) {
     if (m_controller->open(path.toStdString())) {
-        m_playlist->addFile(path);
         m_controller->play();
         m_controls->setPlaying(true);
         m_positionTimer->start();
@@ -242,10 +201,6 @@ void MainWindow::onSeekRequested(double fraction) {
 
 void MainWindow::onVolumeChanged(int percent) {
     m_controller->setVolume(static_cast<float>(percent) / 100.0f);
-}
-
-void MainWindow::onPlaylistFileActivated(const QString& path) {
-    openPath(path);
 }
 
 void MainWindow::onFrameReady(QImage image) {
