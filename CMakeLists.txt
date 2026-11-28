@@ -45,6 +45,7 @@ set(AUVIO_SOURCES
     src/core/VideoRenderer.cpp
     src/core/PlaybackController.cpp
     src/ui/MainWindow.cpp
+    src/ui/TitleBar.cpp
     src/ui/PlayerControls.cpp
     src/ui/PlaylistView.cpp
     src/ui/SettingsDialog.cpp
