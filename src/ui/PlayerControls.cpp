@@ -10,7 +10,10 @@
 namespace auvio {
 
 PlayerControls::PlayerControls(QWidget* parent) : QWidget(parent) {
+    setAttribute(Qt::WA_StyledBackground, true);
+
     m_playPauseButton = new QPushButton(this);
+    m_playPauseButton->setObjectName("playPauseButton");
     m_playPauseButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
     m_playPauseButton->setFixedSize(40, 40);
 
@@ -37,6 +40,8 @@ PlayerControls::PlayerControls(QWidget* parent) : QWidget(parent) {
     controlsRow->addWidget(m_volumeSlider);
 
     auto* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(20, 10, 20, 16);
+    mainLayout->setSpacing(8);
     mainLayout->addLayout(seekRow);
     mainLayout->addLayout(controlsRow);
 

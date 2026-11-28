@@ -91,3 +91,56 @@ QComboBox, QCheckBox {
 QLabel {
     background: transparent;
 }
+
+#titleBar {
+    background-color: rgba(18, 18, 18, 235);
+    border-bottom: 1px solid rgba(255, 255, 255, 18);
+}
+
+#titleBarLabel {
+    color: #f2f2f2;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+#titleBarButton {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: #cfcfcf;
+    font-size: 14px;
+}
+
+#titleBarButton:hover {
+    background-color: rgba(255, 255, 255, 28);
+}
+
+#titleBarCloseButton:hover {
+    background-color: #e81123;
+    color: white;
+}
+
+#playerControlsPanel {
+    background-color: rgba(18, 18, 18, 225);
+    border-top: 1px solid rgba(255, 255, 255, 18);
+}
+
+#playPauseButton {
+    border-radius: 20px;
+    background-color: #0a84ff;
+}
+
+#playPauseButton:hover {
+    background-color: #2f9bff;
+}
+
+#playlistDock {
+    background-color: rgba(20, 20, 20, 235);
+}
+
+#playlistDock::title {
+    padding: 10px;
+    font-weight: 600;
+    background-color: rgba(20, 20, 20, 235);
+}

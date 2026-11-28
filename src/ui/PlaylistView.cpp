@@ -9,10 +9,13 @@ namespace auvio {
 
 PlaylistView::PlaylistView(QWidget* parent) : QWidget(parent) {
     m_listWidget = new QListWidget(this);
+    m_listWidget->setFrameShape(QFrame::NoFrame);
+    m_listWidget->setUniformItemSizes(true);
+    m_listWidget->setSpacing(2);
 
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(m_listWidget);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(8, 8, 8, 8);
 
     connect(m_listWidget, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
         emit fileActivated(item->data(Qt::UserRole).toString());

@@ -11,6 +11,7 @@ class QTimer;
 
 namespace auvio {
 
+class TitleBar;
 class PlayerControls;
 class PlaylistView;
 
@@ -21,6 +22,12 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
 
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
 private slots:
     void onOpenFile();
     void onPlayPauseClicked();
@@ -29,20 +36,32 @@ private slots:
     void onPlaylistFileActivated(const QString& path);
     void onFrameReady(QImage image);
     void onPositionTimer();
+    void onInactivityTimeout();
+    void onMinimize();
+    void onMaximizeRestore();
+    void onOpenSettings();
 
 signals:
     void frameReady(QImage image);
 
 private:
     void openPath(const QString& path);
-    void createMenus();
+    void repositionOverlays();
+    void showOverlayControls();
+    void hideOverlayControls();
+    void resetInactivityTimer();
 
     std::unique_ptr<PlaybackController> m_controller;
 
+    QWidget* m_central;
+    TitleBar* m_titleBar;
     QLabel* m_videoLabel;
     PlayerControls* m_controls;
     PlaylistView* m_playlist;
     QTimer* m_positionTimer;
+    QTimer* m_inactivityTimer;
+
+    bool m_overlaysVisible = true;
 };
 
 }
